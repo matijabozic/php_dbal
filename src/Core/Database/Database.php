@@ -26,7 +26,7 @@
 		 * @var     array
 		 */
 		
-		protected $config = array();
+		protected $config;
 		
 		/**
 		 * PDO Object instance
@@ -55,6 +55,29 @@
 			}
 		}
 		
+		public function __destruct()
+		{
+			$this->config = null;
+			$this->pdoo = null;
+		}
+		
+				
+		/**
+		 * Add configuration through setter method
+		 * 
+		 * @access  public
+		 * @param   array
+		 * @return  void
+		 */
+		 
+		public function setConfig(array $config)
+		{
+			$this->config['dsn']      = "{$config['driver']}:host={$config['host']};dbname={$config['name']}";
+			$this->config['username'] = $config['username'];
+			$this->config['password'] = $config['password'];
+			$this->config['options']  = $config['options']; 
+		}		
+		
 		/**
 		 * Starts database connection, instanciates new PDO object with defined configuration
 		 * 
@@ -78,37 +101,8 @@
 			} catch(\PDOException $e) {
 				echo 'Database connection error: ' . $e->getMessage() . '<br />';
 			}
-			$this->isConnected = true;
 		}
-		
-		/**
-		 * Disconnect from database, destroys PDO Object Instance
-		 * 
-		 * @access  public
-		 * @return  void
-		 */
-		
-		public function disconnect()
-		{
-			$this->pdoo = null;
-		}
-		
-		/**
-		 * Add configuration through setter method
-		 * 
-		 * @access  public
-		 * @param   array
-		 * @return  void
-		 */
-		 
-		public function setConfig($config)
-		{
-			$this->config['dsn']      = "{$config['driver']}:host={$config['host']};dbname={$config['name']}";
-			$this->config['username'] = $config['username'];
-			$this->config['password'] = $config['password'];
-			$this->config['options']  = $config['options']; 
-		}
-		
+
 		/**
 		 * Inserts new data into database
 		 * 
@@ -285,6 +279,33 @@
 		}
 		
 		/**
+		 * Fetches all rows as Array
+		 * 
+		 * @access  public
+		 * @param   string
+		 * @param   array
+		 * @return  array | false
+		 */
+		
+		public function fetchAllArray($sql, $params)
+		{
+			$this->connect();
+			
+			array_unshift($params, null);
+			unset($params[0]);
+			
+			$pdos = $this->pdoo->prepare($sql);
+			
+			foreach($params as $key => $param) {
+				$type = $this->detectType($param);
+				$pdos->bindValue($key, $param, $type);
+			}
+			
+			$pdos->execute();
+			return $pdos->fetchAll(\PDO::FETCH_BOTH);
+		}		
+		
+		/**
 		 * Fetches first row as Associative array
 		 * 
 		 * @access  public
@@ -310,6 +331,33 @@
 			$pdos->execute();
 			return $pdos->fetch(\PDO::FETCH_ASSOC);
 		}
+		
+		/**
+		 * Fetches all rows as Associative array
+		 * 
+		 * @access  public
+		 * @param   string
+		 * @param   array
+		 * @return  array | false
+		 */
+		
+		public function fetchAllAssoc($sql, $params)
+		{
+			$this->connect();
+			
+			array_unshift($params, null);
+			unset($params[0]);
+			
+			$pdos = $this->pdoo->prepare($sql);
+			
+			foreach($params as $key => $param) {
+				$type = $this->detectType($param);
+				$pdos->bindValue($key, $param, $type);
+			}
+			
+			$pdos->execute();
+			return $pdos->fetchAll(\PDO::FETCH_ASSOC);
+		}		
 		
 		/**
 		 * Fetches first row as object
@@ -339,60 +387,6 @@
 		}
 		
 		/**
-		 * Fetches all rows as Array
-		 * 
-		 * @access  public
-		 * @param   string
-		 * @param   array
-		 * @return  array | false
-		 */
-		
-		public function fetchAllArray($sql, $params)
-		{
-			$this->connect();
-			
-			array_unshift($params, null);
-			unset($params[0]);
-			
-			$pdos = $this->pdoo->prepare($sql);
-			
-			foreach($params as $key => $param) {
-				$type = $this->detectType($param);
-				$pdos->bindValue($key, $param, $type);
-			}
-			
-			$pdos->execute();
-			return $pdos->fetchAll(\PDO::FETCH_BOTH);
-		}
-		
-		/**
-		 * Fetches all rows as Associative array
-		 * 
-		 * @access  public
-		 * @param   string
-		 * @param   array
-		 * @return  array | false
-		 */
-		
-		public function fetchAllAssoc($sql, $params)
-		{
-			$this->connect();
-			
-			array_unshift($params, null);
-			unset($params[0]);
-			
-			$pdos = $this->pdoo->prepare($sql);
-			
-			foreach($params as $key => $param) {
-				$type = $this->detectType($param);
-				$pdos->bindValue($key, $param, $type);
-			}
-			
-			$pdos->execute();
-			return $pdos->fetchAll(\PDO::FETCH_ASSOC);
-		}
-		
-		/**
 		 * Fetches all rows as object
 		 * 
 		 * @access  public
@@ -419,11 +413,8 @@
 			return $pdos->fetchAll(\PDO::FETCH_OBJ);
 		}
 		
-		/**
-		 * --------------------------------------------------------------------
-		 * This enables you to use this class joust as you would use PDO object
-		 * --------------------------------------------------------------------
-		 */
+		// Use PDO methods
+
 		public function beginTransaction()
 		{
 			$this->connect();
