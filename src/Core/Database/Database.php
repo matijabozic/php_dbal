@@ -48,10 +48,10 @@
 		public function __construct($config = null)
 		{
 			if(isset($config)) {
-				$this->config['dsn']      = "{$config['driver']}:host={$config['host']};dbname={$config['name']}";
+				$this->config['dsn'] = "{$config['driver']}:host={$config['host']};dbname={$config['name']}";
 				$this->config['username'] = $config['username'];
 				$this->config['password'] = $config['password'];
-				$this->config['options']  = $config['options']; 
+				$this->config['options'] = $config['options']; 
 			}
 		}
 		
@@ -62,17 +62,27 @@
 		 * @return  void
 		 */
 		
-		public function connect()
+		protected function connect()
 		{
-			try {
-				$this->pdoo = new \PDO($this->config["dsn"], $this->config["username"], $this->config["password"], $this->config["options"]);
-			} catch(PDOException $e) {
-				echo 'Error: ' . $e->getMessage() . '<br />';
+			if($this->pdoo) {
+				return;	
 			}
+			
+			try {
+				$this->pdoo = new \PDO(
+					$this->config["dsn"], 
+					$this->config["username"], 
+					$this->config["password"], 
+					$this->config["options"]
+				);
+			} catch(\PDOException $e) {
+				echo 'Database connection error: ' . $e->getMessage() . '<br />';
+			}
+			$this->isConnected = true;
 		}
 		
 		/**
-		 * Disconnect from database, destroys PDO Object Instance and configuration
+		 * Disconnect from database, destroys PDO Object Instance
 		 * 
 		 * @access  public
 		 * @return  void
@@ -81,7 +91,6 @@
 		public function disconnect()
 		{
 			$this->pdoo = null;
-			$this->config = null;
 		}
 		
 		/**
@@ -111,6 +120,8 @@
 		
 		public function insert($table, $data)
 		{
+			$this->connect();
+			
 			$cols = array();
 			$pchs = array();
 			
@@ -150,6 +161,8 @@
 		
 		public function update($table, $data, $identifier)
 		{
+			$this->connect();
+			
 			$set = array();
 			
 			foreach ($data as $columnName => $columnValue) {
@@ -188,6 +201,8 @@
 		
 		public function delete($table, $identifier)
 		{
+			$this->connect();
+			
 			$criteria = array();
 			
 			foreach(array_keys($identifier) as $columnName) {
@@ -253,6 +268,8 @@
 		
 		public function fetchArray($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -278,6 +295,8 @@
 		
 		public function fetchAssoc($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -303,6 +322,8 @@
 		
 		public function fetchObject($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -328,6 +349,8 @@
 		
 		public function fetchAllArray($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -353,6 +376,8 @@
 		
 		public function fetchAllAssoc($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -378,6 +403,8 @@
 		
 		public function fetchAllObject($sql, $params)
 		{
+			$this->connect();
+			
 			array_unshift($params, null);
 			unset($params[0]);
 			
@@ -399,71 +426,85 @@
 		 */
 		public function beginTransaction()
 		{
+			$this->connect();
 			return $this->pdoo->beginTransaction();
 		}
 		
 		public function commit()
 		{
+			$this->connect();
 			return $this->pdoo->commit();
 		}
 		
 		public function errorCode()
 		{
+			$this->connect();
 			return $this->pdoo->errorCode();
 		}
 		
 		public function errorInfo()
 		{
+			$this->connect();
 			return $this->pdoo->errorInfo();
 		}
 		
 		public function exec($statement)
 		{
+			$this->connect();
 			return $this->pdoo->exec($statement);
 		}
 		
 		public function getAttribute($attribute)
 		{
+			$this->connect();
 			return $this->pdoo->getAttribute($attribute);
 		}
 		
 		public function getAvailableDrivers()
 		{
+			$this->connect();
 			return $this->pdoo->getAvailableDrivers();
 		}
 		
 		public function inTransaction()
 		{
+			$this->connect();
 			return $this->pdoo->inTransaction();
 		}
 		
 		public function lastInsertId()
 		{
+			$this->connect();
 			return $this->pdoo->lastInsertId();
 		}
 		
 		public function prepare($statement, $driver_options = array())
 		{
+			$this->connect();
 			return $this->pdoo->prepare($statement, $driver_options);
 		}
 		
 		public function query($statement, $fetchStyle = \PDO::FETCH_OBJ)
 		{
+			$this->connect();
 			return $this->pdoo->query($statement, $fetchStyle);
 		}
 		
 		public function quote($string, $parameter_type = \PDO::PARAM_STR)
 		{
+			$this->connect();
 			return $this->pdoo->quote($string, $parameter_type);
 		}
 		
 		public function rollBack()
 		{
+			$this->connect();
 			return $this->pdoo->rollBack();
 		}
 		
 		public function setAttribute($attribute, $value)
 		{
+			$this->connect();
 			return $this->pdoo->setAttribute($attribute, $value);
 		}
 	}
