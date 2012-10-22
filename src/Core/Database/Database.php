@@ -45,7 +45,7 @@
 		 * @return  void
 		 */
 		
-		public function __construct($config = null)
+		public function __construct(array $config = null)
 		{
 			if(isset($config)) {
 				$this->config['dsn'] = "{$config['driver']}:host={$config['host']};dbname={$config['name']}";
